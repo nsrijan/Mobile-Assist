@@ -22,7 +22,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -33,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     String msg = "";
     String contact;
     HashMap<String, String> cl = new HashMap<>();
+    int countContact;
+    HashMap<String, String> multiContact = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +43,6 @@ public class MainActivity extends AppCompatActivity {
         txvResult = (TextView) findViewById(R.id.txvResult);
 
         info.setText("To send message say \"Send message to <contact> <your message>\"");
-
-
 
         //getting list of contacts
         ContentResolver cr = getContentResolver();
@@ -104,16 +103,16 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "First word: " + msgBody[0],
                             Toast.LENGTH_LONG).show();
 
-                    if ( msgBody[0].toLowerCase() == "call") {
-                        Toast.makeText(getApplicationContext(), "Calling " + cl.get(contact),
+                    if ( msgBody[0].toLowerCase().trim().equals("call")) {
+                        Toast.makeText(getApplicationContext(), "Calling " + cl.get(contact.toLowerCase()),
                                 Toast.LENGTH_LONG).show();
                         Log.i("msgBody[0]", msgBody[0]);
                     }
 
 
 
-                    if ( txvResult.getText().toString().contains("send message") ) {
-                   // if ( msgBody[0].toLowerCase() == "send" ) {
+                   // if ( txvResult.getText().toString().contains("send message") ) {
+                    if ( msgBody[0].toLowerCase().trim().equals("send")) {
                         /*String msgBody[] = txvResult.getText().toString().split(" ");
                         String msg = "";
 
@@ -135,8 +134,16 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
                                     Toast.LENGTH_LONG).show();
 
+                            for ( String key : cl.keySet() ) {
+                               if ( key.contains(contact) ) {
+                                   countContact++;
 
-                            for(int i=2; i< msgBody.length; i++) {
+
+                               }
+                             }
+
+
+                            for(int i=4; i< msgBody.length; i++) {
                                 msg = msg + msgBody[i] + " ";
                             }
 
@@ -191,8 +198,6 @@ public class MainActivity extends AppCompatActivity {
 
 
                 }
-
-
 
                 break;
         }
