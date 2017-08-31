@@ -16,24 +16,32 @@ import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Vector;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private TextView info;
     private TextView txvResult;
+    private ListView suggestionList;
+    private ArrayAdapter adapter;
+    private  String[] listItem = {"a", "b"};
 
     String msg = "";
     String contact;
     HashMap<String, String> cl = new HashMap<>();
     int countContact;
-    HashMap<String, String> multiContact = new HashMap<>();
+    List<String> multiContact = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         info = (TextView) findViewById(R.id.info);
         txvResult = (TextView) findViewById(R.id.txvResult);
+        suggestionList = (ListView) findViewById(R.id.list_suggestion);
+
 
         info.setText("To send message say \"Send message to <contact> <your message>\"");
 
@@ -133,13 +143,21 @@ public class MainActivity extends AppCompatActivity {
 
                             Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
                                     Toast.LENGTH_LONG).show();
-
+                            multiContact.clear();
                             for ( String key : cl.keySet() ) {
                                if ( key.contains(contact) ) {
-                                   countContact++;
-
-
+                                   multiContact.add(key);
                                }
+                                adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, multiContact);
+                                adapter.notifyDataSetChanged();
+                                suggestionList.setAdapter(adapter);
+                                suggestionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                    @Override
+                                    public void onItemClick(AdapterView<?> a,
+                                                            View v, int position, long id) {
+                                        Toast.makeText(getApplicationContext(),"selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                              }
 
 
