@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                    // if ( txvResult.getText().toString().contains("send message") ) {
-                    if ( msgBody[0].toLowerCase().trim().equals("send") ) {
+                    else if ( msgBody[0].toLowerCase().trim().equals("send") ) {
 
                         try {
                             sendMessage(msgBody);
@@ -148,6 +148,10 @@ public class MainActivity extends AppCompatActivity {
                             ex.printStackTrace();
                         }
 
+                    }
+
+                    else {
+                        info.setText("Not a voice command. Try Again.");
                     }
 
 
@@ -163,23 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
         Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
                 Toast.LENGTH_LONG).show();
-        multiContact.clear();
-        for ( String key : cl.keySet() ) {
-            if ( key.toLowerCase().contains(contact.toLowerCase()) ) {
-                multiContact.add(key);
-            }
-            adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, multiContact);
-            adapter.notifyDataSetChanged();
-            suggestionList.setAdapter(adapter);
-            suggestionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> a,
-                                        View v, int position, long id) {
-                    alertConfirmation(suggestionList.getItemAtPosition(position).toString(), CALL_ALERT);
-                    Toast.makeText(getApplicationContext(),"selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
+        multipleContactListAdapter(CALL_ALERT);
 
 
     }
@@ -193,6 +181,10 @@ public class MainActivity extends AppCompatActivity {
 
         Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
                 Toast.LENGTH_LONG).show();
+        multipleContactListAdapter(MSG_ALERT);
+    }
+
+    public void multipleContactListAdapter(String alert) {
         multiContact.clear();
         for ( String key : cl.keySet() ) {
             if ( key.toLowerCase().contains(contact.toLowerCase()) ) {
@@ -258,7 +250,4 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "Message Sent",
                 Toast.LENGTH_LONG).show();
     }
-
-
-
 }
