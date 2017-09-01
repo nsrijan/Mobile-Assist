@@ -1,20 +1,16 @@
 package com.example.nsrijan.virtualassitance;
 
-import android.Manifest;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.speech.RecognizerIntent;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -26,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Vector;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -35,13 +30,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView txvResult;
     private ListView suggestionList;
     private ArrayAdapter adapter;
-    private  String[] listItem = {"a", "b"};
 
     String msg = "";
     String contact;
     HashMap<String, String> cl = new HashMap<>();
-    int countContact;
     List<String> multiContact = new ArrayList<>();
+
+    final String MSG_ALERT = "Sure You want to text ";
+    final String CALL_ALERT = "Sure You want to call ";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
         info = (TextView) findViewById(R.id.info);
         txvResult = (TextView) findViewById(R.id.txvResult);
         suggestionList = (ListView) findViewById(R.id.list_suggestion);
-
 
         info.setText("To send message say \"Send message to <contact> <your message>\"");
 
@@ -91,12 +86,6 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             case ContactsContract.CommonDataKinds.Phone.TYPE_WORK:
                                 phoneType = "Work";
-                                break;
-                            case ContactsContract.CommonDataKinds.Phone.TYPE_FAX_HOME:
-                                phoneType = "Home Fax";
-                                break;
-                            case ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK:
-                                phoneType = "Work Fax";
                                 break;
                             default:
                                 phoneType = "Other";
@@ -139,9 +128,8 @@ public class MainActivity extends AppCompatActivity {
                     txvResult.setText(result.get(0));
                     String msgBody[] = txvResult.getText().toString().split(" ");
 
-
-
                     if ( msgBody[0].toLowerCase().trim().equals("call") ) {
+                        callContact(msgBody);
                         Toast.makeText(getApplicationContext(), "Calling " + cl.get(contact.toLowerCase()),
                                 Toast.LENGTH_LONG).show();
                     }
@@ -170,6 +158,32 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void callContact(String[] msgBody) {
+        contact = msgBody[1].toLowerCase();
+
+        Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
+                Toast.LENGTH_LONG).show();
+        multiContact.clear();
+        for ( String key : cl.keySet() ) {
+            if ( key.toLowerCase().contains(contact.toLowerCase()) ) {
+                multiContact.add(key);
+            }
+            adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, multiContact);
+            adapter.notifyDataSetChanged();
+            suggestionList.setAdapter(adapter);
+            suggestionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> a,
+                                        View v, int position, long id) {
+                    alertConfirmation(suggestionList.getItemAtPosition(position).toString(), CALL_ALERT);
+                    Toast.makeText(getApplicationContext(),"selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+
+    }
+
     public void sendMessage(String[] msgBody) {
         contact = msgBody[3].toLowerCase();
 
@@ -191,36 +205,33 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onItemClick(AdapterView<?> a,
                                         View v, int position, long id) {
-                    alertConfirmation(suggestionList.getItemAtPosition(position).toString());
+                    alertConfirmation(suggestionList.getItemAtPosition(position).toString(), MSG_ALERT);
                     Toast.makeText(getApplicationContext(),"selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
                 }
             });
         }
     }
 
-    public void alertConfirmation(final String selectedContact) {
+    public void alertConfirmation(final String selectedContact, final String flag) {
         //for prompt
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                this);
-
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 
         // set dialog message
         alertDialogBuilder
-                .setMessage("Sure you want to text " + contact + " " + cl.get(selectedContact) + "?")
+                .setMessage(flag + " " + contact + " " + cl.get(selectedContact) + "?")
                 .setCancelable(false)
                 .setPositiveButton("OK",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog,int id) {
-                                // get user input and set it to result
-                                // edit text
-                                SmsManager smsManager = SmsManager.getDefault();
-                                smsManager.sendTextMessage(cl.get(selectedContact), null, msg, null, null);
-                                Toast.makeText(getApplicationContext(), "Sending Message to " + cl.get(selectedContact) + "...",
-                                        Toast.LENGTH_LONG).show();
-                                Toast.makeText(getApplicationContext(), "Message Sent",
-                                        Toast.LENGTH_LONG).show();
-                                                        /*Toast.makeText(getApplicationContext(), "Message permission denied",
-                                                                Toast.LENGTH_LONG).show();*/
+                                if ( flag.equals(MSG_ALERT) ) {
+                                    smsManager(selectedContact);
+                                }
+
+                                if ( flag.equals(CALL_ALERT)) {
+                                    Intent intent = new Intent(Intent.ACTION_DIAL);
+                                    intent.setData(Uri.parse("tel:" + cl.get(selectedContact)));
+                                    startActivity(intent);
+                                }
                             }
                         })
                 .setNegativeButton("Cancel",
@@ -235,10 +246,17 @@ public class MainActivity extends AppCompatActivity {
         // create alert dialog
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.setTitle("Confirm!!!");
-
-
         // show it
         alertDialog.show();
+    }
+
+    public void smsManager(String sc) {
+        SmsManager smsManager = SmsManager.getDefault();
+        smsManager.sendTextMessage(cl.get(sc), null, msg, null, null);
+        Toast.makeText(getApplicationContext(), "Sending Message to " + cl.get(sc) + "...",
+                Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Message Sent",
+                Toast.LENGTH_LONG).show();
     }
 
 
