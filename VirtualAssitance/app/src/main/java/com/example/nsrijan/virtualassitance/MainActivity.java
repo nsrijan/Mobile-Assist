@@ -54,7 +54,12 @@ public class MainActivity extends AppCompatActivity {
 
         info.setText("To send message say \"Send message to <contact> <your message>\"");
 
-        //getting list of contacts
+        getContactList();
+
+    }
+
+    //getting list of contacts
+    public void getContactList() {
         ContentResolver cr = getContentResolver();
         Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI,
                 null, null, null, null);
@@ -74,11 +79,35 @@ public class MainActivity extends AppCompatActivity {
                             ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
                             new String[]{id}, null);
                     while (pCur.moveToNext()) {
+
+                        String phoneType = "";
+                        int type = pCur.getInt(pCur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.TYPE));
+                        switch (type){
+                            case ContactsContract.CommonDataKinds.Phone.TYPE_HOME:
+                                phoneType = "Home";
+                                break;
+                            case ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE:
+                                phoneType = "Mobile";
+                                break;
+                            case ContactsContract.CommonDataKinds.Phone.TYPE_WORK:
+                                phoneType = "Work";
+                                break;
+                            case ContactsContract.CommonDataKinds.Phone.TYPE_FAX_HOME:
+                                phoneType = "Home Fax";
+                                break;
+                            case ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK:
+                                phoneType = "Work Fax";
+                                break;
+                            default:
+                                phoneType = "Other";
+                                break;
+                        }
+
                         String phoneNo = pCur.getString(pCur.getColumnIndex(
                                 ContactsContract.CommonDataKinds.Phone.NUMBER));
                         /*Toast.makeText(getApplicationContext(), "Name: " + name
                                 + ", Phone No: " + phoneNo, Toast.LENGTH_SHORT).show();*/
-                        cl.put(name.toLowerCase(), phoneNo);
+                        cl.put(name+" " + phoneType, phoneNo);
                     }
                     pCur.close();
                 }
@@ -110,101 +139,20 @@ public class MainActivity extends AppCompatActivity {
                     txvResult.setText(result.get(0));
                     String msgBody[] = txvResult.getText().toString().split(" ");
 
-                    Toast.makeText(getApplicationContext(), "First word: " + msgBody[0],
-                            Toast.LENGTH_LONG).show();
 
-                    if ( msgBody[0].toLowerCase().trim().equals("call")) {
+
+                    if ( msgBody[0].toLowerCase().trim().equals("call") ) {
                         Toast.makeText(getApplicationContext(), "Calling " + cl.get(contact.toLowerCase()),
                                 Toast.LENGTH_LONG).show();
-                        Log.i("msgBody[0]", msgBody[0]);
                     }
 
 
 
                    // if ( txvResult.getText().toString().contains("send message") ) {
-                    if ( msgBody[0].toLowerCase().trim().equals("send")) {
-                        /*String msgBody[] = txvResult.getText().toString().split(" ");
-                        String msg = "";
-
-                        Intent sendMessage = new Intent(Intent.ACTION_VIEW);
-                        sendMessage.setData(Uri.parse("sms:"));
-
-                        for(int i=2; i< msgBody.length; i++) {
-                            msg = msg + msgBody[i] + " ";
-                        }
-
-                        sendMessage.putExtra("sms_body", msg);
-                        Toast.makeText(this, "Sending Message", Toast.LENGTH_LONG).show();
-                        startActivity(sendMessage);*/
+                    if ( msgBody[0].toLowerCase().trim().equals("send") ) {
 
                         try {
-
-                            contact = msgBody[3].toLowerCase();
-
-                            Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
-                                    Toast.LENGTH_LONG).show();
-                            multiContact.clear();
-                            for ( String key : cl.keySet() ) {
-                               if ( key.contains(contact) ) {
-                                   multiContact.add(key);
-                               }
-                                adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, multiContact);
-                                adapter.notifyDataSetChanged();
-                                suggestionList.setAdapter(adapter);
-                                suggestionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                    @Override
-                                    public void onItemClick(AdapterView<?> a,
-                                                            View v, int position, long id) {
-                                        Toast.makeText(getApplicationContext(),"selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                             }
-
-
-                            for(int i=4; i< msgBody.length; i++) {
-                                msg = msg + msgBody[i] + " ";
-                            }
-
-                            //for prompt
-                            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                                    this);
-
-
-                            // set dialog message
-                            alertDialogBuilder
-                                    .setMessage("Sure you want to call " + contact + " " + cl.get(contact) + "?")
-                                    .setCancelable(false)
-                                    .setPositiveButton("OK",
-                                            new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog,int id) {
-                                                    // get user input and set it to result
-                                                    // edit text
-                                                    SmsManager smsManager = SmsManager.getDefault();
-                                                    smsManager.sendTextMessage(cl.get(contact), null, msg, null, null);
-                                                        Toast.makeText(getApplicationContext(), "Sending Message...",
-                                                                Toast.LENGTH_LONG).show();
-                                                        Toast.makeText(getApplicationContext(), "Message Sent",
-                                                                Toast.LENGTH_LONG).show();
-                                                        /*Toast.makeText(getApplicationContext(), "Message permission denied",
-                                                                Toast.LENGTH_LONG).show();*/
-                                                }
-                                            })
-                                    .setNegativeButton("Cancel",
-                                            new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog,int id) {
-                                                    Toast.makeText(getApplicationContext(), "Canceled",
-                                                            Toast.LENGTH_LONG).show();
-                                                    dialog.cancel();
-                                                }
-                                            });
-
-                            // create alert dialog
-                            AlertDialog alertDialog = alertDialogBuilder.create();
-                            alertDialog.setTitle("Confirm!!!");
-
-
-                            // show it
-                            alertDialog.show();
+                            sendMessage(msgBody);
 
                         } catch (Exception ex) {
                             Toast.makeText(getApplicationContext(),ex.getMessage().toString(),
@@ -220,6 +168,77 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
 
+    }
+
+    public void sendMessage(String[] msgBody) {
+        contact = msgBody[3].toLowerCase();
+
+        for(int i=4; i< msgBody.length; i++) {
+            msg = msg + msgBody[i] + " ";
+        }
+
+        Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
+                Toast.LENGTH_LONG).show();
+        multiContact.clear();
+        for ( String key : cl.keySet() ) {
+            if ( key.toLowerCase().contains(contact.toLowerCase()) ) {
+                multiContact.add(key);
+            }
+            adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, multiContact);
+            adapter.notifyDataSetChanged();
+            suggestionList.setAdapter(adapter);
+            suggestionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> a,
+                                        View v, int position, long id) {
+                    alertConfirmation(suggestionList.getItemAtPosition(position).toString());
+                    Toast.makeText(getApplicationContext(),"selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    public void alertConfirmation(final String selectedContact) {
+        //for prompt
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                this);
+
+
+        // set dialog message
+        alertDialogBuilder
+                .setMessage("Sure you want to text " + contact + " " + cl.get(selectedContact) + "?")
+                .setCancelable(false)
+                .setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                // get user input and set it to result
+                                // edit text
+                                SmsManager smsManager = SmsManager.getDefault();
+                                smsManager.sendTextMessage(cl.get(selectedContact), null, msg, null, null);
+                                Toast.makeText(getApplicationContext(), "Sending Message to " + cl.get(selectedContact) + "...",
+                                        Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Message Sent",
+                                        Toast.LENGTH_LONG).show();
+                                                        /*Toast.makeText(getApplicationContext(), "Message permission denied",
+                                                                Toast.LENGTH_LONG).show();*/
+                            }
+                        })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int id) {
+                                Toast.makeText(getApplicationContext(), "Canceled",
+                                        Toast.LENGTH_LONG).show();
+                                dialog.cancel();
+                            }
+                        });
+
+        // create alert dialog
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.setTitle("Confirm!!!");
+
+
+        // show it
+        alertDialog.show();
     }
 
 

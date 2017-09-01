@@ -39,11 +39,10 @@
 		android:id="@+id/btnSpeak"
 		android:layout_width="100dp"
 		android:layout_height="100dp"
-		android:layout_alignParentBottom="true"
-		android:layout_centerHorizontal="true"
-		android:layout_marginBottom="60dp"
 		android:gravity="center"
 		android:onClick="getSpeechInput"
-		android:src="@drawable/ic_mic"/>
+		android:src="@drawable/ic_mic"
+		android:layout_alignParentBottom="true"
+		android:layout_centerHorizontal="true" />
 
 </RelativeLayout>
