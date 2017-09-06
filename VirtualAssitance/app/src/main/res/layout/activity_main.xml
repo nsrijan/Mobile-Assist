@@ -2,31 +2,34 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:orientation="vertical">
+	android:orientation="vertical"
+	android:background="@drawable/gradient">
 
 	<TextView
 		android:id="@+id/info"
-		android:layout_width="match_parent"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_alignParentTop="true"
 		android:layout_centerHorizontal="true"
-		android:layout_marginTop="0dp"
+		android:layout_alignParentTop="true"
+		android:layout_marginTop="8dp"
+		android:layout_marginLeft="8dp"
 		android:textColor="#000"
-		android:textSize="26sp"
-		android:textStyle="normal" />
+		android:textSize="18sp"
+		android:textStyle="normal"
+		android:fontFamily="monospace" />
 
 	<TextView
 		android:id="@+id/txvResult"
+		android:layout_below="@+id/info"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignParentTop="true"
 		android:layout_centerHorizontal="true"
-		android:layout_marginTop="150dp"
+		android:layout_marginTop="200dp"
+		android:layout_marginBottom="50dp"
 		android:textColor="#000"
 		android:textSize="26sp"
 		android:textStyle="normal"/>
-
-
 
 	<ListView
 		android:id="@+id/list_suggestion"
@@ -41,7 +44,7 @@
 		android:layout_height="100dp"
 		android:gravity="center"
 		android:onClick="getSpeechInput"
-		android:src="@drawable/ic_mic"
+		android:src="@drawable/pho"
 		android:layout_alignParentBottom="true"
 		android:layout_centerHorizontal="true" />
 
