@@ -1,13 +1,17 @@
 package com.example.nsrijan.virtualassitance;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.speech.RecognizerIntent;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
@@ -47,7 +51,8 @@ public class MainActivity extends AppCompatActivity {
         txvResult = (TextView) findViewById(R.id.txvResult);
         suggestionList = (ListView) findViewById(R.id.list_suggestion);
 
-        info.setText("To send message say \"Send message to <contact> <your message>\"");
+        info.setText("Welcome to Mobile Assist!!!\nTo send message say \"Send message to <contact_name> <your_message>\""+ "\nTo call say" +
+                "\"Call <contact_name>");
 
         getContactList();
 
@@ -77,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
                         String phoneType = "";
                         int type = pCur.getInt(pCur.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.TYPE));
-                        switch (type){
+                        switch (type) {
                             case ContactsContract.CommonDataKinds.Phone.TYPE_HOME:
                                 phoneType = "Home";
                                 break;
@@ -96,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                                 ContactsContract.CommonDataKinds.Phone.NUMBER));
                         /*Toast.makeText(getApplicationContext(), "Name: " + name
                                 + ", Phone No: " + phoneNo, Toast.LENGTH_SHORT).show();*/
-                        cl.put(name+" " + phoneType, phoneNo);
+                        cl.put(name + " " + phoneType, phoneNo);
                     }
                     pCur.close();
                 }
@@ -128,30 +133,30 @@ public class MainActivity extends AppCompatActivity {
                     txvResult.setText(result.get(0));
                     String msgBody[] = txvResult.getText().toString().split(" ");
 
-                    if ( msgBody[0].toLowerCase().trim().equals("call") ) {
+                    if (msgBody[0].toLowerCase().trim().equals("call")) {
                         callContact(msgBody);
-                        Toast.makeText(getApplicationContext(), "Calling " + cl.get(contact.toLowerCase()),
-                                Toast.LENGTH_LONG).show();
+                       // Toast.makeText(getApplicationContext(), "Calling " + cl.get(contact.toLowerCase()),
+                        //        Toast.LENGTH_LONG).show();
                     }
 
 
-
-                   // if ( txvResult.getText().toString().contains("send message") ) {
-                    else if ( msgBody[0].toLowerCase().trim().equals("send") ) {
+                    // if ( txvResult.getText().toString().contains("send message") ) {
+                    else if (msgBody[0].toLowerCase().trim().equals("send")) {
 
                         try {
                             sendMessage(msgBody);
 
                         } catch (Exception ex) {
-                            Toast.makeText(getApplicationContext(),ex.getMessage().toString(),
+                            Toast.makeText(getApplicationContext(), ex.getMessage().toString(),
                                     Toast.LENGTH_LONG).show();
                             ex.printStackTrace();
                         }
 
-                    }
+                    } else {
 
-                    else {
-                        info.setText("Not a voice command. Try Again.");
+                        info.setText(result.get(0) + "\n\n" + "Not a voice command. Try Again.");
+                        txvResult.setText("");
+
                     }
 
 
@@ -165,8 +170,8 @@ public class MainActivity extends AppCompatActivity {
     private void callContact(String[] msgBody) {
         contact = msgBody[1].toLowerCase();
 
-        Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
-                Toast.LENGTH_LONG).show();
+       /* Toast.makeText(getApplicationContext(), contact + ":" + cl.get(contact),
+                Toast.LENGTH_LONG).show();*/
         multipleContactListAdapter(CALL_ALERT);
 
 
@@ -175,54 +180,65 @@ public class MainActivity extends AppCompatActivity {
     public void sendMessage(String[] msgBody) {
         contact = msgBody[3].toLowerCase();
 
-        for(int i=4; i< msgBody.length; i++) {
+        for (int i = 4; i < msgBody.length; i++) {
             msg = msg + msgBody[i] + " ";
         }
 
-        Toast.makeText(getApplicationContext(), contact +":" + cl.get(contact),
+        Toast.makeText(getApplicationContext(), contact + ":" + cl.get(contact),
                 Toast.LENGTH_LONG).show();
         multipleContactListAdapter(MSG_ALERT);
     }
 
-    public void multipleContactListAdapter(String alert) {
+    public void multipleContactListAdapter(final String alert) {
         multiContact.clear();
-        for ( String key : cl.keySet() ) {
-            if ( key.toLowerCase().contains(contact.toLowerCase()) ) {
+        for (String key : cl.keySet()) {
+            if (key.toLowerCase().contains(contact.toLowerCase())) {
                 multiContact.add(key);
             }
-            adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, multiContact);
-            adapter.notifyDataSetChanged();
-            suggestionList.setAdapter(adapter);
-            suggestionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> a,
-                                        View v, int position, long id) {
-                    alertConfirmation(suggestionList.getItemAtPosition(position).toString(), MSG_ALERT);
-                    Toast.makeText(getApplicationContext(),"selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
-                }
-            });
+
         }
+
+        if (multiContact.isEmpty()) {
+            info.setText("No such contact with name: " + contact);
+            return;
+        }
+
+        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, multiContact);
+        adapter.notifyDataSetChanged();
+        suggestionList.setAdapter(adapter);
+        suggestionList.setBackgroundColor(Color.MAGENTA);
+        suggestionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> a,
+                                    View v, int position, long id) {
+                alertConfirmation(suggestionList.getItemAtPosition(position).toString(), alert);
+                Toast.makeText(getApplicationContext(), "selected item is : " + suggestionList.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public void alertConfirmation(final String selectedContact, final String flag) {
-        //for prompt
+
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 
-        // set dialog message
         alertDialogBuilder
                 .setMessage(flag + " " + contact + " " + cl.get(selectedContact) + "?")
                 .setCancelable(false)
                 .setPositiveButton("OK",
                         new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog,int id) {
-                                if ( flag.equals(MSG_ALERT) ) {
+                            public void onClick(DialogInterface dialog, int id) {
+                                if (flag.equals(MSG_ALERT)) {
+                                   // Toast.makeText(getApplicationContext(), "My message", Toast.LENGTH_LONG).show();
                                     smsManager(selectedContact);
                                 }
 
-                                if ( flag.equals(CALL_ALERT)) {
-                                    Intent intent = new Intent(Intent.ACTION_DIAL);
+                                if (flag.equals(CALL_ALERT)) {
+                                    Intent intent = new Intent(Intent.ACTION_CALL);
                                     intent.setData(Uri.parse("tel:" + cl.get(selectedContact)));
-                                    startActivity(intent);
+
+                                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                                        startActivity(intent);
+                                    }
                                 }
                             }
                         })
@@ -245,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
     public void smsManager(String sc) {
         SmsManager smsManager = SmsManager.getDefault();
         smsManager.sendTextMessage(cl.get(sc), null, msg, null, null);
-        Toast.makeText(getApplicationContext(), "Sending Message to " + cl.get(sc) + "...",
+        Toast.makeText(getApplicationContext(), "Sending Message to " + cl.get(sc) + ":" + msg,
                 Toast.LENGTH_LONG).show();
         Toast.makeText(getApplicationContext(), "Message Sent",
                 Toast.LENGTH_LONG).show();
